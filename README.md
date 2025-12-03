@@ -20,6 +20,6 @@
 * **Fonts:** Inter & Outfit (Google Fonts)
 
 🌟 Credits
-Created by: AshGeoX / asisk01
+Created by: AshGeoX / asishk01
 
 Data Sources: STARRY STORIES - Publicly available location data of Indian Scientific Institutions (ISRO, IMD, NIOT, etc.).
