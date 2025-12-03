@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institutional Network | Geospatial Smart Thinkers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <style>
+        :root {
+            /* Light Theme (Default) */
+            --bg-dark: #f8fafc;
+            --bg-sidebar: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --accent-color: #0284c7;
+            --accent-glow: rgba(2, 132, 199, 0.2);
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(0, 0, 0, 0.1);
+
+            --cat-space: #0891b2;
+            --cat-atmos: #2563eb;
+            --cat-land: #16a34a;
+            --cat-govt: #9333ea;
+
+            --font-main: 'Inter', sans-serif;
+            --font-display: 'Outfit', sans-serif;
+        }
+
+        [data-theme="dark"] {
+            --bg-dark: #0f172a;
+            --bg-sidebar: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-color: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.3);
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 350px;
+            background-color: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--glass-border);
+            z-index: 1000;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.05);
+        }
+
+        .brand {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            column-gap: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+            justify-content: space-between;
+        }
+
+        .brand-logo {
+            height: 2.5rem;
+            width: 2.5rem;
+            object-fit: contain;
+        }
+
+        .brand-text h1 {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+        }
+
+        .brand-text .subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .theme-btn {
+            margin-left: auto;
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .theme-btn .material-icons-round {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            filter: none;
+        }
+
+        .theme-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-primary);
+        }
+
+        .theme-btn:hover .material-icons-round {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .theme-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .search-box {
+            padding: 1rem;
+            position: relative;
+        }
+
+        .search-box .material-icons-round {
+            position: absolute;
+            left: 1.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        .filter-section {
+            padding: 0 1rem 1rem;
+        }
+
+        .filter-section h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .filter-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .chip {
+            padding: 0.25rem 0.75rem;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .chip:hover,
+        .chip.active {
+            background: var(--accent-color);
+            color: #fff;
+            border-color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .institution-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 0.5rem;
+        }
+
+        .list-item {
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .list-item:hover {
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .list-item.active {
+            background: rgba(2, 132, 199, 0.1);
+            border-color: var(--accent-color);
+        }
+
+        .list-item h4 {
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .list-item .meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Footer Container */
+        .footer-note {
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--glass-border);
+        }
+
+        /* Footer Link (Starry Stories) */
+        .footer-note a.starry-link {
+            font-family: "Times New Roman", Times, serif;
+            font-weight: 600;
+            font-style: italic;
+            font-size: 0.9rem;
+            color: #000000;
+            text-decoration: none;
+            background-color: #ffa600;
+            padding: 2px 5px;
+            border-radius: 4px;
+            margin-right: 4px;
+        }
+
+        /* Styling for AshGeoX */
+        .footer-note .ash-signature {
+            font-weight: bold;
+            font-style: italic;
+            color: #000000;
+        }
+
+        /* Map Area */
+        .map-area {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            background: #f8fafc;
+        }
+
+        /* Map Overlay Info (Desktop Default) */
+        .map-overlay-info {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            width: 350px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            z-index: 900;
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .map-overlay-info.visible {
+            transform: translateX(0);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: var(--text-primary);
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+            background: var(--accent-color);
+            color: #fff;
+        }
+
+        .overlay-header h2 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+        }
+
+        #overlay-location {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .overlay-body {
+            margin-top: 1.5rem;
+        }
+
+        #overlay-desc {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #475569;
+            margin-bottom: 1.5rem;
+        }
+
+        .visit-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--text-primary);
+            color: var(--bg-dark);
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .visit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        /* Leaflet Customization */
+        .leaflet-popup-content-wrapper {
+            background: var(--bg-sidebar);
+            color: var(--text-primary);
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .leaflet-popup-tip {
+            background: var(--bg-sidebar);
+        }
+
+        .leaflet-container {
+            font-family: var(--font-main);
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column-reverse;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 40vh; /* Default height */
+                border-right: none;
+                border-top: 1px solid var(--glass-border);
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+                transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+                z-index: 1000;
+            }
+
+            .sidebar.collapsed {
+                height: 10vh;
+            }
+
+            .map-area {
+                height: 60vh; /* Default height */
+                width: 100%;
+                transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .map-area.expanded {
+                height: 90vh;
+            }
+
+            /* Sidebar Handle */
+            .sidebar-handle {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 24px;
+                width: 100%;
+                cursor: pointer;
+                position: absolute;
+                top: 0;
+                left: 0;
+                background: var(--bg-sidebar);
+                border-radius: 16px 16px 0 0;
+                z-index: 1001;
+            }
+
+            .sidebar-handle::before {
+                content: '';
+                width: 40px;
+                height: 4px;
+                background-color: var(--text-secondary);
+                border-radius: 2px;
+                opacity: 0.3;
+            }
+
+            .brand {
+                padding: 2rem 1rem 0.75rem 1rem;
+            }
+
+            .sidebar.collapsed .search-box,
+            .sidebar.collapsed .filter-section,
+            .sidebar.collapsed .institution-list,
+            .sidebar.collapsed .footer-note {
+                opacity: 0;
+                pointer-events: none;
+                display: none;
+            }
+
+            .sidebar.collapsed .brand {
+                border-bottom: none;
+            }
+
+            .brand-logo {
+                height: 1.75rem;
+                width: 1.75rem;
+            }
+
+            .brand-text h1 {
+                font-size: 1rem;
+            }
+
+            .brand-text .subtitle {
+                display: none;
+            }
+
+            .search-box {
+                padding: 0.5rem 1rem;
+            }
+
+            .search-box input {
+                padding: 0.5rem 1rem 0.5rem 2.5rem;
+                font-size: 0.9rem;
+            }
+
+            .filter-section {
+                padding: 0 1rem 0.5rem;
+            }
+
+            .filter-section h3 {
+                display: none;
+            }
+
+            .filter-chips {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding-bottom: 0.5rem;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .filter-chips::-webkit-scrollbar {
+                display: none;
+            }
+
+            .institution-list {
+                padding: 0 0.5rem;
+            }
+
+            .footer-note {
+                display: none;
+            }
+
+            /* --- MAP OVERLAY MOBILE FIX (Google Maps Style) --- */
+            .map-overlay-info {
+                position: fixed; /* Fixed to viewport, not container */
+                width: 100%;
+                height: auto;
+                max-height: 85vh; /* Covers most of screen */
+                top: auto;
+                bottom: 0;
+                right: 0;
+                left: 0;
+                z-index: 2000; /* Sits ON TOP of sidebar (which is 1000) */
+                
+                border-radius: 20px 20px 0 0;
+                transform: translateY(110%); /* Start hidden */
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                
+                /* Reset desktop styling */
+                border-left: none;
+                border-right: none;
+                border-bottom: none;
+                padding: 1.5rem;
+                box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+            }
+
+            .map-overlay-info.visible {
+                transform: translateY(0);
+            }
+        }
+
+        /* Desktop Handle Hidden */
+        .sidebar-handle {
+            display: none;
+        }
+
+        /* Floating Action Button */
+        .fab-container {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+        }
+
+        .fab-btn {
+            background: var(--text-primary);
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 50px;
+            padding: 0.75rem 1.5rem;
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .fab-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .fab-icon {
+            font-size: 1.25rem;
+            margin-right: 0.5rem;
+        }
+
+        /* Career Modal */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-backdrop.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .career-modal {
+            background: var(--bg-sidebar);
+            width: 90%;
+            max-width: 600px;
+            max-height: 85vh;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-backdrop.visible .career-modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--accent-glow);
+        }
+
+        .modal-header h2 {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            color: var(--accent-color);
+        }
+
+        .modal-body {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .roadmap-step {
+            position: relative;
+            padding-left: 2rem;
+            margin-bottom: 2rem;
+            border-left: 2px solid var(--glass-border);
+        }
+
+        .roadmap-step:last-child {
+            margin-bottom: 0;
+            border-left: 2px solid transparent;
+        }
+
+        .step-icon {
+            position: absolute;
+            left: -1.25rem;
+            top: 0;
+            width: 2.5rem;
+            height: 2.5rem;
+            background: var(--bg-sidebar);
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .step-content h3 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .step-content p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Enhanced Overlay Info */
+        .info-group {
+            margin-bottom: 1rem;
+        }
+
+        .info-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+
+        .info-value {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+            .fab-container {
+                bottom: 1.5rem;
+                right: 1.5rem;
+            }
+
+            .fab-btn {
+                padding: 0.75rem 1rem;
+            }
+
+            .fab-text {
+                display: none;
+            }
+
+            .fab-icon {
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <nav class="sidebar">
+            <div class="sidebar-handle" id="sidebar-handle"></div>
+            <div class="brand">
+                <span class="material-icons-round" style="font-size: 2.5rem; color: var(--accent-color);">public</span>
+                <div class="brand-text">
+                    <h1>GeoClusters India</h1>
+                    <span class="subtitle">Institutional Network</span>
+                </div>
+                <button id="theme-toggle" class="theme-btn" title="Toggle Theme">
+                    <span class="material-icons-round">dark_mode</span>
+                </button>
+            </div>
+
+            <div class="search-box">
+                <span class="material-icons-round">search</span>
+                <input type="text" id="search-input" placeholder="Search institutions...">
+            </div>
+
+            <div class="filter-section">
+                <h3>Categories</h3>
+                <div class="filter-chips" id="category-filters">
+                    </div>
+            </div>
+
+            <div class="institution-list" id="institution-list">
+                </div>
+
+            <div class="footer-note">
+                <p>
+                    <a href="https://www.starrystories.com/remote-sensing-jobs-in-india/" target="_blank"
+                        rel="noopener noreferrer" class="starry-link">STARRY STORIES</a>
+                    | created by <span class="ash-signature">AshGeoX</span>
+                </p>
+            </div>
+        </nav>
+
+        <main class="map-area">
+            <div id="map"></div>
+
+            <div class="fab-container">
+                <button class="fab-btn" onclick="openCareerModal()">
+                    <span class="material-icons-round fab-icon">school</span>
+                    <span class="fab-text">Career Roadmap</span>
+                </button>
+            </div>
+
+            <div class="map-overlay-info" id="map-overlay">
+                <div class="overlay-content">
+                    <button class="close-btn" onclick="closeOverlay()"><span
+                            class="material-icons-round">close</span></button>
+                    <div class="overlay-header">
+                        <div class="category-badge" id="overlay-category">Space</div>
+                        <h2 id="overlay-title">Institution Name</h2>
+                        <p id="overlay-location"><span class="material-icons-round">place</span> Location</p>
+                    </div>
+                    <div class="overlay-body">
+                        <div class="info-group">
+                            <span class="info-label">Overview</span>
+                            <p class="info-value" id="overlay-desc">Leading the way in geospatial innovation.</p>
+                        </div>
+
+                        <div class="info-group">
+                            <span class="info-label">Research Focus</span>
+                            <p class="info-value" id="overlay-research">Remote Sensing, GIS Applications</p>
+                        </div>
+
+                        <div class="info-group">
+                            <span class="info-label">Internships</span>
+                            <p class="info-value" id="overlay-internship">Summer & Winter programs available.</p>
+                        </div>
+                        <a href="#" target="_blank" id="overlay-link" class="visit-btn">
+                            Visit Website <span class="material-icons-round">open_in_new</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-backdrop" id="career-modal">
+        <div class="career-modal">
+            <div class="modal-header">
+                <h2>Path to Geospatial Scientist</h2>
+                <button class="close-btn" style="position: static;" onclick="closeCareerModal()">
+                    <span class="material-icons-round">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="roadmap-step">
+                    <div class="step-icon"><span class="material-icons-round">school</span></div>
+                    <div class="step-content">
+                        <h3>Step 1: High School (10+2)</h3>
+                        <p>Focus on Science stream with Physics, Mathematics, and Chemistry. Geography is a strong plus.
+                        </p>
+                    </div>
+                </div>
+                <div class="roadmap-step">
+                    <div class="step-icon"><span class="material-icons-round">menu_book</span></div>
+                    <div class="step-content">
+                        <h3>Step 2: Undergraduate Degree</h3>
+                        <p>Pursue B.Sc. or B.Tech in: <br>• Geoinformatics / Remote Sensing<br>• Civil Engineering<br>•
+                            Geography / Geology<br>• Computer Science</p>
+                    </div>
+                </div>
+                <div class="roadmap-step">
+                    <div class="step-icon"><span class="material-icons-round">science</span></div>
+                    <div class="step-content">
+                        <h3>Step 3: Master's & Specialization</h3>
+                        <p>M.Sc. or M.Tech in Geoinformatics, Spatial Data Science, or Earth Observation. Focus on
+                            research projects.</p>
+                    </div>
+                </div>
+                <div class="roadmap-step">
+                    <div class="step-icon"><span class="material-icons-round">code</span></div>
+                    <div class="step-content">
+                        <h3>Step 4: Key Skills</h3>
+                        <p>Master tools like QGIS, ArcGIS, and programming languages like Python (GeoPandas) and R.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        const institutions = [
+            // Atmosphere & Meteorology
+            { name: "Indian Institute of Tropical Meteorology (IITM)", location: "Pune, Maharashtra", lat: 18.5362, lng: 73.8047, category: "Atmosphere" },
+            { name: "India Meteorological Department (IMD)", location: "New Delhi", lat: 28.5893, lng: 77.2250, category: "Atmosphere" },
+            { name: "National Centre for Medium-Range Weather Forecasting (NCMRWF)", location: "Noida, UP", lat: 28.6280, lng: 77.3649, category: "Atmosphere" },
+            { name: "National Atmospheric Research Laboratory (NARL)", location: "Gadanki, Andhra Pradesh", lat: 13.4594, lng: 79.1750, category: "Atmosphere" },
+            { name: "Ministry of Earth Sciences (MoES)", location: "New Delhi", lat: 28.5900, lng: 77.2200, category: "Atmosphere" },
+
+            // Ocean & Coastal
+            { name: "CSIR – National Institute of Oceanography (NIO)", location: "Dona Paula, Goa", lat: 15.4589, lng: 73.8067, category: "Ocean" },
+            { name: "National Institute of Ocean Technology (NIOT)", location: "Chennai, Tamil Nadu", lat: 12.9300, lng: 80.2100, category: "Ocean" },
+            { name: "National Centre for Polar and Ocean Research (NCPOR)", location: "Vasco da Gama, Goa", lat: 15.3963, lng: 73.7929, category: "Ocean" },
+            { name: "Indian National Centre for Ocean Information Services (INCOIS)", location: "Hyderabad, Telangana", lat: 17.5254, lng: 78.3702, category: "Ocean" },
+            { name: "National Centre for Sustainable Coastal Management (NCSCM)", location: "Chennai, Tamil Nadu", lat: 13.0102, lng: 80.2357, category: "Ocean" },
+            { name: "National Centre for Earth Science Studies (NCESS)", location: "Thiruvananthapuram, Kerala", lat: 8.5241, lng: 76.9070, category: "Ocean" },
+
+            // Water Resources
+            { name: "Central Water Commission (CWC)", location: "New Delhi", lat: 28.5667, lng: 77.1833, category: "Water" },
+            { name: "National Institute of Hydrology (NIH)", location: "Roorkee, Uttarakhand", lat: 29.8667, lng: 77.8833, category: "Water" },
+            { name: "Central Ground Water Board (CGWB)", location: "Faridabad, Haryana", lat: 28.4089, lng: 77.3178, category: "Water" },
+            { name: "Centre for Water Resources Development and Management (CWRDM)", location: "Kozhikode, Kerala", lat: 11.2892, lng: 75.8718, category: "Water" },
+
+            // Agriculture & Rural
+            { name: "Indian Council of Agricultural Research (ICAR)", location: "New Delhi", lat: 28.6155, lng: 77.2133, category: "Agriculture" },
+            { name: "National Dairy Development Board (NDDB)", location: "Anand, Gujarat", lat: 22.5407, lng: 72.9633, category: "Agriculture" },
+            { name: "Dept of Agriculture, Cooperation and Farmers Welfare", location: "New Delhi", lat: 28.6155, lng: 77.2133, category: "Agriculture" },
+            { name: "National Institute of Rural Development and Panchayati Raj (NIRD&PR)", location: "Hyderabad, Telangana", lat: 17.3124, lng: 78.4023, category: "Agriculture" },
+            { name: "ICAR-National Bureau of Soil Survey & Land Use Planning", location: "Nagpur, Maharashtra", lat: 21.1458, lng: 79.0882, category: "Agriculture" },
+
+            // Environment & Forest
+            { name: "Ministry of Environment, Forest and Climate Change", location: "New Delhi", lat: 28.5833, lng: 77.2167, category: "Environment" },
+            { name: "Govind Ballabh Pant National Institute of Himalayan Environment", location: "Almora, Uttarakhand", lat: 29.6333, lng: 79.6333, category: "Environment" },
+            { name: "Forest Survey of India (FSI)", location: "Dehradun, Uttarakhand", lat: 30.3398, lng: 78.0061, category: "Environment" },
+            { name: "Indian Council of Forestry Research and Education (ICFRE)", location: "Dehradun, Uttarakhand", lat: 30.3436, lng: 77.9997, category: "Environment" },
+            { name: "Wildlife Institute of India (WII)", location: "Dehradun, Uttarakhand", lat: 30.2833, lng: 77.9667, category: "Environment" },
+
+            // Space & Remote Sensing
+            { name: "Indian Space Research Organisation (ISRO)", location: "Bengaluru, Karnataka", lat: 12.9450, lng: 77.5650, category: "Space" },
+            { name: "National Remote Sensing Centre (NRSC)", location: "Hyderabad, Telangana", lat: 17.4700, lng: 78.4300, category: "Space" },
+            { name: "Indian Institute of Remote Sensing (IIRS)", location: "Dehradun, Uttarakhand", lat: 30.3400, lng: 78.0400, category: "Space" },
+            { name: "North Eastern Space Applications Centre (NESAC)", location: "Umiam, Meghalaya", lat: 25.6756, lng: 91.9017, category: "Space" },
+            { name: "Haryana Space Applications Centre (HARSAC)", location: "Hisar, Haryana", lat: 29.1500, lng: 75.7000, category: "Space" },
+            { name: "Andhra Pradesh Space Applications Centre (APSAC)", location: "Vijayawada, AP", lat: 16.5062, lng: 80.6480, category: "Space" },
+            { name: "National Centre of Geo-Informatics", location: "New Delhi", lat: 28.5800, lng: 77.2300, category: "Space" },
+
+            // Geology & Disaster
+            { name: "Geological Survey of India (GSI)", location: "Kolkata, West Bengal", lat: 22.5567, lng: 88.3517, category: "Geology" },
+            { name: "National Centre for Seismology (NCS)", location: "New Delhi", lat: 28.5893, lng: 77.2250, category: "Geology" },
+            { name: "Ministry of Mines", location: "New Delhi", lat: 28.6149, lng: 77.2144, category: "Geology" },
+            { name: "National Institute of Disaster Management (NIDM)", location: "New Delhi", lat: 28.7041, lng: 77.1025, category: "Disaster" },
+            { name: "National Disaster Management Authority (NDMA)", location: "New Delhi", lat: 28.5600, lng: 77.1900, category: "Disaster" },
+
+            // Others
+            { name: "Defence Research and Development Organisation (DRDO)", location: "New Delhi", lat: 28.6100, lng: 77.2100, category: "Government" },
+            { name: "Defence Geoinformatics Research Establishment (DGRE)", location: "Chandigarh", lat: 30.7333, lng: 76.7794, category: "Government" },
+            { name: "National Highway Authority of India (NHAI)", location: "New Delhi", lat: 28.5921, lng: 77.0460, category: "Government" },
+            { name: "Department of Science and Technology (DST)", location: "New Delhi", lat: 28.5400, lng: 77.1800, category: "Government" },
+            { name: "National Informatics Centre (NIC)", location: "New Delhi", lat: 28.5800, lng: 77.2300, category: "Government" },
+            { name: "Indian Council of Medical Research (ICMR)", location: "New Delhi", lat: 28.5686, lng: 77.2075, category: "Government" }
+        ];
+
+        // Initialize Map
+        const map = L.map('map', {
+            center: [22.5937, 78.9629], // Center of India
+            zoom: 5,
+            zoomControl: false,
+            attributionControl: false
+        });
+
+        // Add Zoom Control to top-right
+        L.control.zoom({
+            position: 'topright'
+        }).addTo(map);
+
+        // Positron Tile Layer (CartoDB) - Light Theme
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        // State
+        let activeCategory = 'All';
+        let markers = [];
+
+        // Category Colors
+        const categoryColors = {
+            'Atmosphere': '#3b82f6', // Blue
+            'Ocean': '#06b6d4',      // Cyan
+            'Water': '#0ea5e9',      // Sky
+            'Agriculture': '#eab308', // Yellow
+            'Environment': '#22c55e', // Green
+            'Space': '#8b5cf6',      // Violet
+            'Geology': '#f97316',    // Orange
+            'Disaster': '#ef4444',   // Red
+            'Government': '#64748b'        // Slate
+        };
+
+        // DOM Elements
+        const listContainer = document.getElementById('institution-list');
+        const filterContainer = document.getElementById('category-filters');
+        const searchInput = document.getElementById('search-input');
+        const overlay = document.getElementById('map-overlay');
+
+        // Initialize
+        function init() {
+            renderFilters();
+            renderList(institutions);
+            addMarkers(institutions);
+
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const filtered = institutions.filter(inst =>
+                    inst.name.toLowerCase().includes(term) ||
+                    inst.location.toLowerCase().includes(term)
+                );
+                renderList(filtered);
+                addMarkers(filtered);
+            });
+        }
+
+        // Render Category Filters
+        function renderFilters() {
+            const categories = ['All', ...new Set(institutions.map(i => i.category))];
+
+            filterContainer.innerHTML = categories.map(cat => `
+                <div class="chip ${cat === 'All' ? 'active' : ''}" onclick="filterCategory('${cat}')">
+                    ${cat}
+                </div>
+            `).join('');
+        }
+
+        // Filter Logic
+        window.filterCategory = (category) => {
+            activeCategory = category;
+
+            // Update chips
+            document.querySelectorAll('.chip').forEach(chip => {
+                chip.classList.toggle('active', chip.innerText.trim() === category);
+            });
+
+            // Filter data
+            const filtered = category === 'All'
+                ? institutions
+                : institutions.filter(i => i.category === category);
+
+            renderList(filtered);
+            addMarkers(filtered);
+        };
+
+        // Render Sidebar List
+        function renderList(data) {
+            listContainer.innerHTML = data.map((inst, index) => `
+                <div class="list-item" onclick="flyToLocation(${inst.lat}, ${inst.lng}, '${inst.name}')">
+                    <h4>${inst.name}</h4>
+                    <div class="meta">
+                        <span>${inst.location}</span>
+                        <span style="color: ${categoryColors[inst.category]}">${inst.category}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Add Markers to Map
+        function addMarkers(data) {
+            // Clear existing markers
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+
+            data.forEach(inst => {
+                const color = categoryColors[inst.category];
+
+                const marker = L.circleMarker([inst.lat, inst.lng], {
+                    radius: 8,
+                    fillColor: color,
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                });
+
+                marker.bindPopup(`<b>${inst.name}</b><br>${inst.location}`);
+
+                marker.on('click', () => {
+                    showOverlay(inst);
+                    map.flyTo([inst.lat, inst.lng], 10, {
+                        duration: 1.5
+                    });
+                });
+
+                marker.addTo(map);
+                markers.push(marker);
+            });
+        }
+
+        // Fly to Location from List
+        window.flyToLocation = (lat, lng, name) => {
+            const inst = institutions.find(i => i.name === name);
+            if (inst) {
+                showOverlay(inst);
+                map.flyTo([lat, lng], 10, {
+                    duration: 1.5
+                });
+            }
+        };
+
+        // Show Overlay
+        function showOverlay(inst) {
+            document.getElementById('overlay-category').innerText = inst.category;
+            document.getElementById('overlay-category').style.backgroundColor = categoryColors[inst.category];
+            document.getElementById('overlay-title').innerText = inst.name;
+            document.getElementById('overlay-location').innerHTML = `<span class="material-icons-round">place</span> ${inst.location}`;
+
+            // Dynamic Content Generation based on Category
+            let desc = "";
+            let research = "";
+            let internship = "";
+
+            switch (inst.category) {
+                case 'Space':
+                    desc = "India's premier organization for space research and satellite technology.";
+                    research = "Satellite Launch Vehicles, Earth Observation, Planetary Exploration.";
+                    internship = "ISRO START program, Summer Research Fellowships.";
+                    break;
+                case 'Atmosphere':
+                    desc = "Dedicated to weather forecasting, monsoon studies, and climate research.";
+                    research = "Climate Modeling, Monsoon Prediction, Air Quality.";
+                    internship = "Project-based internships for M.Sc/M.Tech students.";
+                    break;
+                case 'Ocean':
+                    desc = "Focuses on oceanographic research, marine resources, and coastal zones.";
+                    research = "Deep Sea Mining, Coastal Management, Marine Biology.";
+                    internship = "Dissertation programs for postgraduates.";
+                    break;
+                case 'Agriculture':
+                    desc = "Leading research in agricultural practices and soil health.";
+                    research = "Crop Monitoring, Soil Mapping, Precision Agriculture.";
+                    internship = "ICAR student training programs.";
+                    break;
+                default:
+                    desc = `A key institution in India's ${inst.category} sector.`;
+                    research = "Geospatial Applications, Data Analysis, Policy Formulation.";
+                    internship = "Check official website for current openings.";
+            }
+
+            document.getElementById('overlay-desc').innerText = desc;
+            document.getElementById('overlay-research').innerText = research;
+            document.getElementById('overlay-internship').innerText = internship;
+
+            // Generate a Google Search link since we don't have specific URLs for all
+            const query = encodeURIComponent(inst.name + " official website");
+            document.getElementById('overlay-link').href = `https://www.google.com/search?q=${query}&btnI=1`; // btnI=1 is "I'm Feeling Lucky"
+
+            overlay.classList.add('visible');
+        }
+
+        // Close Overlay
+        window.closeOverlay = () => {
+            overlay.classList.remove('visible');
+            map.flyTo([22.5937, 78.9629], 5, { duration: 1.5 }); // Reset view
+        };
+
+        // Theme Toggle Logic
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeIcon = themeToggleBtn.querySelector('.material-icons-round');
+        let currentTheme = 'light';
+
+        // Tile Layers
+        const lightTiles = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+        const darkTiles = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+
+        themeToggleBtn.addEventListener('click', () => {
+            if (currentTheme === 'light') {
+                // Switch to Dark
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeIcon.textContent = 'light_mode';
+                currentTheme = 'dark';
+
+                // Update Map Tiles
+                map.eachLayer((layer) => {
+                    if (layer instanceof L.TileLayer) {
+                        layer.setUrl(darkTiles);
+                    }
+                });
+            } else {
+                // Switch to Light
+                document.documentElement.removeAttribute('data-theme');
+                themeIcon.textContent = 'dark_mode';
+                currentTheme = 'light';
+
+                // Update Map Tiles
+                map.eachLayer((layer) => {
+                    if (layer instanceof L.TileLayer) {
+                        layer.setUrl(lightTiles);
+                    }
+                });
+            }
+        });
+
+        // Mobile Sidebar Handle Logic
+        const sidebarHandle = document.getElementById('sidebar-handle');
+        const sidebar = document.querySelector('.sidebar');
+        const mapArea = document.querySelector('.map-area');
+
+        if (sidebarHandle) {
+            sidebarHandle.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                mapArea.classList.toggle('expanded');
+
+                // Refresh map size after transition
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 350);
+            });
+        }
+
+        // Start
+        init();
+
+        // Career Modal Logic
+        const careerModal = document.getElementById('career-modal');
+
+        window.openCareerModal = () => {
+            careerModal.classList.add('visible');
+        };
+
+        window.closeCareerModal = () => {
+            careerModal.classList.remove('visible');
+        };
+
+        // Close modal when clicking outside
+        careerModal.addEventListener('click', (e) => {
+            if (e.target === careerModal) {
+                closeCareerModal();
+            }
+        });
+    </script>
+</body>
+
+</html>
